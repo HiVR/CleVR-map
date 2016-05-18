@@ -14,7 +14,7 @@ public class NetworkManager : MonoBehaviour
     #region Fields
 
     /// <summary>
-    /// Contains the byte size used in the buffer for receiving messages
+    /// Contains the byte size used in the buffer for messages
     /// </summary>
     private const int BYTESIZE = 1024 * 1024;
 
@@ -138,6 +138,8 @@ public class NetworkManager : MonoBehaviour
     /// <param name="client">The client that will receive all static objects</param>
     private void SentStatic(TcpClient client)
     {
+        byte[] messageBytes = System.Text.Encoding.Unicode.GetBytes("Welcome, you are connected!");
+        client.GetStream().Write(messageBytes, 0, messageBytes.Length); // Send the stream
     }
 
     /// <summary>
