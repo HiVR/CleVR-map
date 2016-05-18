@@ -19,6 +19,20 @@ public class NetworkManager : MonoBehaviour
     private const int BYTESIZE = 1024 * 1024;
 
     /// <summary>
+    /// Some things will only get checked once in this many frames
+    /// Editable in Unity
+    /// </summary>
+    [SerializeField]
+    private int frameCheck = 30;
+
+    /// <summary>
+    /// Port that the server will listen to
+    /// Editable in Unity
+    /// </summary>
+    [SerializeField]
+    private int port = 25565;
+
+    /// <summary>
     /// Contains the active server object
     /// </summary>
     private TcpListener server;
@@ -67,7 +81,7 @@ public class NetworkManager : MonoBehaviour
 
         this.clientList = new List<TcpClient>();
 
-        IPEndPoint endpoint = new IPEndPoint(IPAddress.Loopback, 25565); // Address + port
+        IPEndPoint endpoint = new IPEndPoint(IPAddress.Loopback, this.port); // Address + port
         this.server = new TcpListener(endpoint); // Instantiate the object
         this.server.Start(); // Start listening...
     }
@@ -132,7 +146,7 @@ public class NetworkManager : MonoBehaviour
     /// <param name="client">The client that will receive the dynamic objects</param>
     private void SentDynamic(TcpClient client)
     {
-        if (this.frameCounter % 30 == 0)
+        if (this.frameCounter % this.frameCheck == 0)
         {
             this.frameCounter = 0;
         }
