@@ -43,7 +43,7 @@ public class NetworkManager : MonoBehaviour
     private List<TcpClient> clientList;
 
     /// <summary>
-    /// Counts the frames because some things don't need to happen every frame
+    /// Counts the physics-frames because some things don't need to happen every frame
     /// </summary>
     private int frameCounter = 0;
 
@@ -87,13 +87,19 @@ public class NetworkManager : MonoBehaviour
     }
 
     /// <summary>
-    /// This method will be called every frame and contains calls to various methods
+    /// This method will be called every frame and will accept new connections
     /// </summary>
     private void Update()
     {
-        this.frameCounter++;
         this.AcceptNewConnection();
+    }
 
+    /// <summary>
+    /// This method will be called every physics frame and contains calls to various methods
+    /// </summary>
+    private void FixedUpdate()
+    {
+        this.frameCounter++;
         foreach (TcpClient client in this.clientList)
         {
             this.ReadMessage(client);
