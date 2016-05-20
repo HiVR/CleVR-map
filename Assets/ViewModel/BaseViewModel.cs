@@ -37,6 +37,16 @@ namespace Assets.ViewModel
         protected void OnEnable()
         {
             this.Observed = this.CreateModel(this.transform);
+
+            this.AddModelToTracking();
+        }
+
+        /// <summary>
+        /// Called when GameObject is disabled.
+        /// </summary>
+        protected void OnDisable()
+        {
+            this.RemoveModelFromTracking();
         }
 
         /// <summary>
@@ -45,6 +55,18 @@ namespace Assets.ViewModel
         /// <param name="transform">The transform of the GameObject.</param>
         /// <returns>Created model</returns>
         protected abstract T CreateModel(Transform transform);
+
+
+        /// <summary>
+        /// Adds the model to a tracking list.
+        /// </summary>
+        protected abstract void AddModelToTracking();
+
+        /// <summary>
+        /// Removes the model from a tracking list.
+        /// </summary>
+        protected abstract void RemoveModelFromTracking();
+
 
         #endregion Methods
     }
