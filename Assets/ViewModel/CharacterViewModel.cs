@@ -5,6 +5,7 @@ namespace Assets.ViewModel
 {
     using Assets.Model;
     using Assets.Model.Factories;
+    using Assets.Logic;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -28,6 +29,22 @@ namespace Assets.ViewModel
         protected override Character CreateModel(Transform transform)
         {
             return CharacterFactory.CreateCharacter(transform);
+        }
+
+        /// <summary>
+        /// Adds the model to a tracking list.
+        /// </summary>
+        protected override void AddModelToTracking()
+        {
+            ObjectTracker.AddDynamicObject(this);
+        }
+
+        /// <summary>
+        /// Removes the model from a tracking list.
+        /// </summary>
+        protected override void RemoveModelFromTracking()
+        {
+            ObjectTracker.RemoveDynamicObject(this);
         }
 
         /// <summary>
