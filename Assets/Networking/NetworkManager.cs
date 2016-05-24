@@ -2,48 +2,42 @@
 // Copyright (c) 2016 HiVR All Rights Reserved
 // </copyright>
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 
 /// <summary>
-/// This class is responsible for communicating with our client-map
+/// This class is responsible for communicating with our client-map.
 /// </summary>
 public class NetworkManager : MonoBehaviour
 {
     #region Fields
 
     /// <summary>
-    /// Contains the byte size used in the buffer for messages
-    /// </summary>
-    private const int BYTESIZE = 1024 * 1024;
-
-    /// <summary>
-    /// Some things will only get checked once in this many frames
-    /// Editable in Unity
+    /// Some things will only get checked once in this many frames.
+    /// Not a constant because editable in Unity.
     /// </summary>
     [SerializeField]
     private int frameCheck = 30;
 
     /// <summary>
-    /// Port that the server will listen to
-    /// Editable in Unity
+    /// Port that the server will listen to.
+    /// Not a constant because editable in Unity.
     /// </summary>
     [SerializeField]
     private int port = 25565;
 
     /// <summary>
-    /// Contains the active server object
+    /// Contains the active server object.
     /// </summary>
     private TcpListener server;
 
     /// <summary>
-    /// Contains every client that has been connected
+    /// Contains every client that has been connected.
     /// </summary>
     private List<TcpClient> clientList;
 
     /// <summary>
-    /// Counts the physics-frames because some things don't need to happen every frame
+    /// Counts the physics-frames because some things don't need to happen every frame.
     /// </summary>
     private int frameCounter = 0;
 
@@ -52,106 +46,62 @@ public class NetworkManager : MonoBehaviour
     #region Methods
 
     /// <summary>
-    /// This method is responsible for receiving a buffer and converting it to a ASCII message
-    /// </summary>
-    /// <param name="bytes">Buffer with the client message</param>
-    /// <returns>String that contains ASCII message</returns>
-    private static string CleanMessage(byte[] bytes)
-    {
-        string message = System.Text.Encoding.ASCII.GetString(bytes);
-
-        string res = string.Empty;
-        foreach (char nullChar in message)
-        {
-            if (nullChar != '\0')
-            {
-                res += nullChar;
-            }
-        }
-
-        return res;
-    }
-
-    /// <summary>
-    /// Initialize the NetworkManger on Unity startup by starting the server
+    /// Initialize the NetworkManger on Unity startup by starting the server.
     /// </summary>
     private void Start()
     {
-        Application.runInBackground = true; // Unity will continue running in the background
+        Application.runInBackground = true; // Unity will continue running in the background.
 
         this.clientList = new List<TcpClient>();
-
-        IPEndPoint endpoint = new IPEndPoint(IPAddress.Loopback, this.port); // Address + port
-        this.server = new TcpListener(endpoint); // Instantiate the object
-        this.server.Start(); // Start listening...
+        this.server = Network.StartServer(this.port);
     }
 
     /// <summary>
-    /// This method will be called every frame and will accept new connections
+    /// This method will be called every frame and will accept new connections and sent the static map.
     /// </summary>
     private void Update()
     {
-        this.AcceptNewConnection();
+        if (this.server.Pending())
+        {
+            TcpClient newClient = Network.AcceptNewConnection(this.server);
+            this.clientList.Add(newClient);
+            this.SentStatic(newClient);
+        }
     }
 
     /// <summary>
-    /// This method will be called every physics frame and contains calls to various methods
+    /// This method will be called every physics frame and contains calls to various methods.
     /// </summary>
     private void FixedUpdate()
     {
         this.frameCounter++;
         foreach (TcpClient client in this.clientList)
         {
-            this.ReadMessage(client);
+            if (client.GetStream().DataAvailable)
+            {
+                Network.ReadMessage(client);
+            }
+
             this.SentDynamic(client);
 
-            // TODO Implement pings to check if connection is alive
+            // TODO Implement pings to check if connection is alive.
         }
     }
 
     /// <summary>
-    /// This method checks if there is a client trying to make a connection and accepts it
+    /// This method will sent all the static objects to a client.
     /// </summary>
-    private void AcceptNewConnection()
-    {
-        if (this.server.Pending())
-        {
-            TcpClient newClient = this.server.AcceptTcpClient();
-            this.clientList.Add(newClient);
-            Debug.Log("Client connected from " + newClient.Client.LocalEndPoint.ToString());
-            this.SentStatic(newClient);
-        }
-    }
-
-    /// <summary>
-    /// This method checks if there is a message from the client and reads it
-    /// </summary>
-    /// <param name="client">The client that will get checked</param>
-    private void ReadMessage(TcpClient client)
-    {
-        if (client.GetStream().DataAvailable)
-        {
-            byte[] buffer = new byte[BYTESIZE];
-            client.GetStream().Read(buffer, 0, BYTESIZE);
-            string message = CleanMessage(buffer);
-            Debug.Log(message);
-        }
-    }
-
-    /// <summary>
-    /// This method will sent all the static objects to a client
-    /// </summary>
-    /// <param name="client">The client that will receive all static objects</param>
+    /// <param name="client">the client that will receive all static objects</param>
     private void SentStatic(TcpClient client)
     {
-        byte[] messageBytes = System.Text.Encoding.Unicode.GetBytes("Welcome, you are connected!");
-        client.GetStream().Write(messageBytes, 0, messageBytes.Length); // Send the stream
+        byte[] messageBytes = System.Text.Encoding.ASCII.GetBytes("Welcome, you are connected!");
+        Network.SendMessage(client, messageBytes);
     }
 
     /// <summary>
-    /// This method will sent the dynamic objects to a client
+    /// This method will sent the dynamic objects to a client.
     /// </summary>
-    /// <param name="client">The client that will receive the dynamic objects</param>
+    /// <param name="client">the client that will receive the dynamic objects</param>
     private void SentDynamic(TcpClient client)
     {
         if (this.frameCounter % this.frameCheck == 0)
