@@ -3,10 +3,9 @@
 // </copyright>
 namespace Assets.Model.Network
 {
-    using System.Threading;
-    using System.Net.Sockets;
-    using SerializedObjects;
     using Map;
+    using SerializedObjects;
+    using System.Threading;
     using UnityEngine;
 
     /// <summary>
@@ -19,12 +18,12 @@ namespace Assets.Model.Network
         /// <summary>
         /// This server object.
         /// </summary>
-        Server server = new Server();
+        private Server server = new Server();
 
         /// <summary>
         /// Thread in which the Server lives.
         /// </summary>
-        Thread oThread;
+        private Thread thread;
 
         #endregion Fields
 
@@ -38,55 +37,57 @@ namespace Assets.Model.Network
             Application.runInBackground = true; // Unity will continue running in the background.
 
             Debug.Log("Starting Server!");
-            oThread = new Thread(new ThreadStart(server.StartServer));
-            
-            // Start the thread
-            oThread.Start();
+            this.thread = new Thread(new ThreadStart(this.server.StartServer));
+
+            // Start the thread.
+            this.thread.Start();
 
             // Wait for the thread to become alive.
-            while (!oThread.IsAlive);
+            while (!this.thread.IsAlive)
+            {
+            }
 
             // Wait for socket to become available.
-            while (server.getListener() == null)
+            while (this.server.GetListener() == null)
             {
                 Thread.Sleep(100);
             }
 
             // Sent static objects at start.
-            // -> This will hangs unity until the packets have all been sent! Look into this.
-            SendStaticObjects();
+            // -> This will hangs unity until the packets have all been sent!
+            // TODO: Look into this.
+            this.SendStaticObjects();
         }
 
         /// <summary>
         /// Stop Server and provide hook for cleanup.
         /// </summary>
-        void OnDisable()
+        private void OnDisable()
         {
             // Close the socket of the server.
-            server.getListener().Close();
+            this.server.GetListener().Close();
 
             // Stop Server thread.
-            oThread.Abort();
+            this.thread.Abort();
 
             // Wait for thread to finish.
-            oThread.Join();
+            this.thread.Join();
         }
 
         /// <summary>
         /// This function is called by Unity at fixed intervals.
         /// </summary>
-        void FixedUpdate()
+        private void FixedUpdate()
         {
-            // Sent dynamic updated objects.
-            // TODO
+            // TODO Sent dynamic updated objects.
         }
 
         /// <summary>
         /// Send all Static Objects.
         /// </summary>
-        void SendStaticObjects()
+        private void SendStaticObjects()
         {
-            foreach(MonoBehaviour monoBehaviour in ObjectTracker.GetStaticObjects())
+            foreach (MonoBehaviour monoBehaviour in ObjectTracker.GetStaticObjects())
             {
                 SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
                 SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
@@ -94,7 +95,7 @@ namespace Assets.Model.Network
 
                 SerializableTransformObject serializableTransformObject = new SerializableTransformObject(monoBehaviour.GetInstanceID(), 1, true, position, scale, rotation);
 
-                server.sendData(serializableTransformObject);
+                this.server.SendData(serializableTransformObject);
             }
         }
 

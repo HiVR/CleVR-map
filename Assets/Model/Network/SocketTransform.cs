@@ -6,40 +6,47 @@ namespace Assets.Model.Network
     using SerializedObjects;
     using System.Net.Sockets;
 
-    class SocketTransform
+    /// <summary>
+    /// This class is responsible linking the serializableTransformObject with the Socket.
+    /// </summary>
+    internal class SocketTransform
     {
-        #region Fields
+        #region Constructors
 
         /// <summary>
-        /// Value: serializableTransformObject
-        /// </summary>
-        public SerializableTransformObject serializableTransformObject { get; set; }
-        
-        /// <summary>
-        /// Value: socket
-        /// </summary>
-        public Socket socket { get; set; }
-
-        #endregion Fields
-
-        #region Methods
-
-        /// <summary>
-        /// Empty constructor
+        /// Initializes a new instance of the SocketTransform class.
+        /// Empty constructor.
         /// </summary>
         public SocketTransform()
         {
         }
 
         /// <summary>
-        /// Constructor to initialize values.
+        /// Initializes a new instance of the SocketTransform class.
+        /// Constructor with initial values.
         /// </summary>
+        /// <param name="serializableTransformObject">contains the SerializableTransformObject</param>
+        /// <param name="socket">contains the Socket</param>
         public SocketTransform(SerializableTransformObject serializableTransformObject, Socket socket)
         {
-            this.serializableTransformObject = serializableTransformObject;
-            this.socket = socket;
+            this.SerializableTransformObject = serializableTransformObject;
+            this.Socket = socket;
         }
 
-        #endregion Methods
+        #endregion Constructors
+
+        #region Properties
+
+        /// <summary>
+        /// Gets or sets the SerializableTransformObject.
+        /// </summary>
+        public SerializableTransformObject SerializableTransformObject { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Socket.
+        /// </summary>
+        public Socket Socket { get; set; }
+
+        #endregion Properties
     }
 }
