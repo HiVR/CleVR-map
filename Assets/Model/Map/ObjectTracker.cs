@@ -1,11 +1,11 @@
 ﻿// <copyright file="ObjectTracker.cs" company="HiVR">
 //     HiVR All rights reserved.
 // </copyright>
-using UnityEngine;
-using System.Collections.Generic;
-
-namespace Assets.Logic
+namespace Assets.Model.Map
 {
+    using UnityEngine;
+    using System.Collections.Generic;
+
     /// <summary>
     /// Static class which keeps track of all relevant objects in the Unity world.
     /// </summary>
@@ -14,21 +14,21 @@ namespace Assets.Logic
         #region Fields
 
         /// <summary>
-        /// The list of static objects.
+        /// The HashSet of static objects.
         /// </summary>
-        private static List<MonoBehaviour> staticObjects = new List<MonoBehaviour>();
+        private static HashSet<MonoBehaviour> staticObjects = new HashSet<MonoBehaviour>();
 
         /// <summary>
-        /// The list of dynamic objects.
+        /// The HashSet of dynamic objects.
         /// </summary>
-        private static List<MonoBehaviour> dynamicObjects = new List<MonoBehaviour>();
+        private static HashSet<MonoBehaviour> dynamicObjects = new HashSet<MonoBehaviour>();
 
         #endregion Fields
 
         #region Methods
 
         /// <summary>
-        /// Adds a static object to the tracking list.
+        /// Adds a static object to the tracking HashSet.
         /// </summary>
         public static void AddStaticObject(MonoBehaviour staticObject)
         {
@@ -36,7 +36,7 @@ namespace Assets.Logic
         }
 
         /// <summary>
-        /// Removes a static object from the tracking list.
+        /// Removes a static object from the tracking HashSet.
         /// </summary>
         public static void RemoveStaticObject(MonoBehaviour staticObject)
         {
@@ -44,15 +44,15 @@ namespace Assets.Logic
         }
 
         /// <summary>
-        /// Returns a list of all static objects.
+        /// Returns a HashSet of all static objects.
         /// </summary>
-        public static List<MonoBehaviour> GetStaticObjects()
+        public static HashSet<MonoBehaviour> GetStaticObjects()
         {
             return staticObjects;
         }
 
         /// <summary>
-        /// Adds a dynamic object to the tracking list.
+        /// Adds a dynamic object to the tracking HashSet.
         /// </summary>
         public static void AddDynamicObject(MonoBehaviour dynamicObject)
         {
@@ -60,7 +60,7 @@ namespace Assets.Logic
         }
 
         /// <summary>
-        /// Removes a dynamic object from the tracking list.
+        /// Removes a dynamic object from the tracking HashSet.
         /// </summary>
         public static void RemoveDynamicObject(MonoBehaviour dynamicObject)
         {
@@ -68,9 +68,9 @@ namespace Assets.Logic
         }
 
         /// <summary>
-        /// Returns a list of all dynamic objects.
+        /// Returns a HashSet of all dynamic objects.
         /// </summary>
-        public static List<MonoBehaviour> GetDynamicObjects()
+        public static HashSet<MonoBehaviour> GetDynamicObjects()
         {
             return dynamicObjects;
         }
