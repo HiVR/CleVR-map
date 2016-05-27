@@ -5,7 +5,7 @@ namespace Assets.ViewModel
 {
     using Assets.Model;
     using Assets.Model.Factories;
-    using Assets.Logic;
+    using Assets.Model.Map;
     using System;
     using System.Collections.Generic;
     using System.Linq;

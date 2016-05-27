@@ -3,11 +3,7 @@
 // </copyright>
 namespace Assets.ViewModel
 {
-    using Assets.Logic;
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
+    using Assets.Model.Map;
 
     /// <summary>
     /// Static object view model for object that will never move during runtime.
