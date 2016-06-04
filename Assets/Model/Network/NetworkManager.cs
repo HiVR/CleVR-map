@@ -64,8 +64,8 @@ namespace Assets.Model.Network
         /// </summary>
         private void OnDisable()
         {
-            // Close the socket of the server.
-            this.server.GetListener().Close();
+            // Stop the server
+            this.server.StopServer();
 
             // Stop Server thread.
             this.thread.Abort();
