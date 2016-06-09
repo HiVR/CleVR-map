@@ -18,6 +18,11 @@ namespace Assets.Model.Network
         #region Fields
 
         /// <summary>
+        /// The number of fixed updates after which dynamic items are sent.
+        /// </summary>
+        private const int NumberOfFramesDynamicObjectsUpdate = 50;
+
+        /// <summary>
         /// This server object.
         /// </summary>
         private Server server = new Server();
@@ -26,11 +31,6 @@ namespace Assets.Model.Network
         /// Thread in which the Server lives.
         /// </summary>
         private Thread thread;
-
-        /// <summary>
-        /// The number of fixed updates after which dynamic items are sent.
-        /// </summary>
-        private const int numberOfFramesDynamicObjectsUpdate = 50;
 
         /// <summary>
         /// The counted number of fixed updates after the last dynamic objects have been sent.
@@ -48,7 +48,7 @@ namespace Assets.Model.Network
         {
             Application.runInBackground = true; // Unity will continue running in the background.
 
-            Debug.Log("Starting Server!");
+            Debug.Log("[Server] Starting Server...");
             this.thread = new Thread(new ThreadStart(this.server.StartServer));
 
             // Start the thread.
@@ -91,16 +91,15 @@ namespace Assets.Model.Network
         /// </summary>
         private void FixedUpdate()
         {
-            if (this.server.IsConnectionEstablished() && numberOfFramesDynamicObjectsUpdate < this.numberOfFramesDynamicObjectsUpdateCounter)
+            if (this.server.IsConnectionEstablished() && NumberOfFramesDynamicObjectsUpdate < this.numberOfFramesDynamicObjectsUpdateCounter)
             {
                 this.numberOfFramesDynamicObjectsUpdateCounter = 0;
 
-                SendDynamicObjects();
+                this.SendDynamicObjects();
             }
 
             // Increase counter
             this.numberOfFramesDynamicObjectsUpdateCounter++;
-            
         }
 
         /// <summary>
@@ -113,7 +112,7 @@ namespace Assets.Model.Network
                 // Only send instances of ViewModels.
                 if (monoBehaviour.GetType().Name.EndsWith("ViewModel"))
                 {
-                    String type = monoBehaviour.GetType().Name.Replace("ViewModel", "");
+                    string type = monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty);
 
                     SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
                     SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
@@ -136,7 +135,7 @@ namespace Assets.Model.Network
                 // Only send instances of ViewModels.
                 if (monoBehaviour.GetType().Name.EndsWith("ViewModel"))
                 {
-                    String type = monoBehaviour.GetType().Name.Replace("ViewModel", "");
+                    string type = monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty);
 
                     SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
                     SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
