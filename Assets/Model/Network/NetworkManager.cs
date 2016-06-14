@@ -5,8 +5,10 @@ namespace Assets.Model.Network
 {
     using Map;
     using SerializedObjects;
+    using System;
     using System.Threading;
     using UnityEngine;
+    using ViewModel;
 
     /// <summary>
     /// This class is responsible for starting and interacting with the Server.
@@ -14,6 +16,11 @@ namespace Assets.Model.Network
     public class NetworkManager : MonoBehaviour
     {
         #region Fields
+
+        /// <summary>
+        /// The number of fixed updates after which dynamic items are sent.
+        /// </summary>
+        private const int NumberOfFramesDynamicObjectsUpdate = 50;
 
         /// <summary>
         /// This server object.
@@ -24,6 +31,11 @@ namespace Assets.Model.Network
         /// Thread in which the Server lives.
         /// </summary>
         private Thread thread;
+
+        /// <summary>
+        /// The counted number of fixed updates after the last dynamic objects have been sent.
+        /// </summary>
+        private int numberOfFramesDynamicObjectsUpdateCounter = 0;
 
         #endregion Fields
 
@@ -36,7 +48,7 @@ namespace Assets.Model.Network
         {
             Application.runInBackground = true; // Unity will continue running in the background.
 
-            Debug.Log("Starting Server!");
+            Debug.Log("[Server] Starting Server...");
             this.thread = new Thread(new ThreadStart(this.server.StartServer));
 
             // Start the thread.
@@ -64,8 +76,8 @@ namespace Assets.Model.Network
         /// </summary>
         private void OnDisable()
         {
-            // Close the socket of the server.
-            this.server.GetListener().Close();
+            // Stop the server
+            this.server.StopServer();
 
             // Stop Server thread.
             this.thread.Abort();
@@ -79,7 +91,15 @@ namespace Assets.Model.Network
         /// </summary>
         private void FixedUpdate()
         {
-            // TODO Sent dynamic updated objects.
+            if (this.server.IsConnectionEstablished() && NumberOfFramesDynamicObjectsUpdate < this.numberOfFramesDynamicObjectsUpdateCounter)
+            {
+                this.numberOfFramesDynamicObjectsUpdateCounter = 0;
+
+                this.SendDynamicObjects();
+            }
+
+            // Increase counter
+            this.numberOfFramesDynamicObjectsUpdateCounter++;
         }
 
         /// <summary>
@@ -89,13 +109,42 @@ namespace Assets.Model.Network
         {
             foreach (MonoBehaviour monoBehaviour in ObjectTracker.GetStaticObjects())
             {
-                SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
-                SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
-                SerializableVector4 rotation = new SerializableVector4(monoBehaviour.transform.rotation.w, monoBehaviour.transform.rotation.x, monoBehaviour.transform.rotation.y, monoBehaviour.transform.rotation.z);
+                // Only send instances of ViewModels.
+                if (monoBehaviour.GetType().Name.EndsWith("ViewModel"))
+                {
+                    string type = monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty);
 
-                SerializableTransformObject serializableTransformObject = new SerializableTransformObject(monoBehaviour.GetInstanceID(), 1, true, position, scale, rotation);
+                    SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
+                    SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
+                    SerializableVector4 rotation = new SerializableVector4(monoBehaviour.transform.rotation.w, monoBehaviour.transform.rotation.x, monoBehaviour.transform.rotation.y, monoBehaviour.transform.rotation.z);
 
-                this.server.SendData(serializableTransformObject);
+                    SerializableTransformObject serializableTransformObject = new SerializableTransformObject(monoBehaviour.GetInstanceID(), type, true, position, scale, rotation);
+
+                    this.server.SendData(serializableTransformObject);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Send all Dynamic Objects.
+        /// </summary>
+        private void SendDynamicObjects()
+        {
+            foreach (MonoBehaviour monoBehaviour in ObjectTracker.GetDynamicObjects())
+            {
+                // Only send instances of ViewModels.
+                if (monoBehaviour.GetType().Name.EndsWith("ViewModel"))
+                {
+                    string type = monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty);
+
+                    SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
+                    SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
+                    SerializableVector4 rotation = new SerializableVector4(monoBehaviour.transform.rotation.w, monoBehaviour.transform.rotation.x, monoBehaviour.transform.rotation.y, monoBehaviour.transform.rotation.z);
+
+                    SerializableTransformObject serializableTransformObject = new SerializableTransformObject(monoBehaviour.GetInstanceID(), type, false, position, scale, rotation);
+
+                    this.server.SendData(serializableTransformObject);
+                }
             }
         }
 

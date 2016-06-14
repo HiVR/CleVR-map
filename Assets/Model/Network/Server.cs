@@ -5,6 +5,7 @@ namespace Assets.Model.Network
 {
     using SerializedObjects;
     using System;
+    using System.Collections.Generic;
     using System.Net;
     using System.Net.Sockets;
     using System.Threading;
@@ -32,6 +33,21 @@ namespace Assets.Model.Network
         /// </summary>
         private Socket listener;
 
+        /// <summary>
+        /// Queue to store items before they are send.
+        /// </summary>
+        private Queue<SerializableTransformObject> sendQueue = new Queue<SerializableTransformObject>();
+
+        /// <summary>
+        /// Is the server running?
+        /// </summary>
+        private bool isRunning = false;
+
+        /// <summary>
+        /// Are the static objects sent?
+        /// </summary>
+        private bool isConnectionEstablished = false;
+
         #endregion Fields
 
         #region Methods
@@ -49,36 +65,103 @@ namespace Assets.Model.Network
 
             // Set listen backlog to 100 pending connection.
             this.listener.Listen(100);
+
+            this.isRunning = true;
+
+            this.MainQueueSender();
         }
 
         /// <summary>
-        /// Start the server! Configure the socket to start listening on a specific address/port.
+        /// Stops the server. Clears the socket.
+        /// </summary>
+        public void StopServer()
+        {
+            Debug.Log("[Server] Shutting down...");
+
+            this.isRunning = false;
+
+            try
+            {
+                this.listener.Shutdown(SocketShutdown.Both);
+            }
+            catch (SocketException e)
+            {
+                // A socket exception can happen on shutdown, ignore.
+                Debug.Log("[Server] Caught exception on shutdown of server: " + e.Message);
+            }
+
+            this.listener.Close();
+        }
+
+        /// <summary>
+        /// Send data to client, enqueue object before sending.
         /// </summary>
         /// <param name="serializableTransformObject">the Unity object that gets send to the client</param>
         public void SendData(SerializableTransformObject serializableTransformObject)
         {
-            // Create a combined transformObject/socket object.
-            SocketTransform socketTransform = new SocketTransform(serializableTransformObject, this.listener);
+            this.sendQueue.Enqueue(serializableTransformObject);
+        }
 
-            Debug.Log("Server: Initiating data transfer.");
+        /// <summary>
+        /// Getter for the listener socket.
+        /// </summary>
+        /// <returns>the listener socket</returns>
+        public Socket GetListener()
+        {
+            return this.listener;
+        }
 
-            // Reset event notifier.
-            this.allDone.Reset();
+        /// <summary>
+        /// Is the server running?
+        /// </summary>
+        /// <returns>boolean isRunning</returns>
+        public bool IsServerRunning()
+        {
+            return this.isRunning;
+        }
 
-            // Begin accepting connections, if a connection has been accepted call "Accept".
-            this.listener.BeginAccept(this.Accept, socketTransform);
+        /// <summary>
+        /// Do we have an established connection?
+        /// </summary>
+        /// <returns>boolean isConnectionEstablished</returns>
+        public bool IsConnectionEstablished()
+        {
+            return this.isConnectionEstablished;
+        }
 
-            // Wait until the packet is sent.
-            this.allDone.WaitOne();
+        /// <summary>
+        /// This method contains the logic for sending the main queue
+        /// </summary>
+        private void MainQueueSender()
+        {
+            while (this.isRunning)
+            {
+                if (this.sendQueue.Count != 0)
+                {
+                    // Create a combined transformObject/socket object.
+                    SocketTransform socketTransform = new SocketTransform(this.sendQueue.Dequeue(), this.listener);
+
+                    // Reset event notifier.
+                    this.allDone.Reset();
+
+                    // Begin accepting connections, if a connection has been accepted call "Accept".
+                    this.listener.BeginAccept(this.Accept, socketTransform);
+
+                    Debug.Log("[Server] Server started and ready to accept connections.");
+
+                    // Wait until the packet is sent.
+                    this.allDone.WaitOne();
+                }
+            }
         }
 
         /// <summary>
         /// Starts when the connection was accepted by the remote hosts and prepares to send data.
         /// </summary>
         /// <param name="result">contains the Connection to the client</param>
-        public void Accept(IAsyncResult result)
+        private void Accept(IAsyncResult result)
         {
-            Debug.Log("Connection accepted!!");
+            Debug.Log("[Server] Connection accepted!!");
 
             // Retrieve the SerializableTransformObject from the ASync result.
             SerializableTransformObject serializableTransform = ((SocketTransform)result.AsyncState).SerializableTransformObject;
@@ -97,7 +180,7 @@ namespace Assets.Model.Network
         /// Ends sending the data.
         /// </summary>
         /// <param name="result">contains the Connection to the client</param>
-        public void Send(IAsyncResult result)
+        private void Send(IAsyncResult result)
         {
             // Retrieve the SerializableTransformObject from the ASync result.
             SerializableTransformObject serializableTransform = (SerializableTransformObject)result.AsyncState;
@@ -105,19 +188,16 @@ namespace Assets.Model.Network
             // Fetch the amount of bytes sent.
             int size = serializableTransform.Socket.EndSend(result);
 
-            Debug.Log("Server: Send data: " + size + " bytes.");
+            Debug.Log("[Server] Send data: " + size + " bytes.");
+
+            // Connection has been established
+            if (!this.isConnectionEstablished)
+            {
+                this.isConnectionEstablished = true;
+            }
 
             // Signal thread that message has been sent!
             this.allDone.Set();
-        }
-
-        /// <summary>
-        /// Getter for the listener socket.
-        /// </summary>
-        /// <returns>the listener socket</returns>
-        public Socket GetListener()
-        {
-            return this.listener;
         }
 
         #endregion Methods
