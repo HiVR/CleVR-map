@@ -112,8 +112,16 @@ namespace Assets.Model.Network
                 // Only send instances of ViewModels.
                 if (monoBehaviour.GetType().Name.EndsWith("ViewModel"))
                 {
-                    string type = monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty);
-
+                    SerializableType type;
+                    try
+                    {
+                        type = StringToSerializableType(monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty));
+                    }
+                    catch (ArgumentException e)
+                    {
+                        Console.WriteLine(e.Message);
+                        continue;
+                    };
                     SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
                     SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
                     SerializableVector4 rotation = new SerializableVector4(monoBehaviour.transform.rotation.w, monoBehaviour.transform.rotation.x, monoBehaviour.transform.rotation.y, monoBehaviour.transform.rotation.z);
@@ -135,7 +143,16 @@ namespace Assets.Model.Network
                 // Only send instances of ViewModels.
                 if (monoBehaviour.GetType().Name.EndsWith("ViewModel"))
                 {
-                    string type = monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty);
+                    SerializableType type;
+                    try
+                    {
+                        type = StringToSerializableType(monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty));
+                    } catch (ArgumentException e)
+                    {
+                        Console.WriteLine(e.Message);
+                        continue;
+                    };
+                    
 
                     SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
                     SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
@@ -145,6 +162,29 @@ namespace Assets.Model.Network
 
                     this.server.SendData(serializableTransformObject);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Transform String to object of enum SerializableType
+        /// </summary>
+        private SerializableType StringToSerializableType(String typeName)
+        {
+            Console.WriteLine(typeName);
+            switch (typeName)
+            {
+                case "Bench":
+                    return SerializableType.Bench;
+                case "Car":
+                    return SerializableType.Car;
+                case "Building":
+                    return SerializableType.Building;
+                case "Garden":
+                    return SerializableType.Garden;
+                case "TV":
+                    return SerializableType.Television;
+                default:
+                    throw new ArgumentException("This object is not yet supported: " + typeName);
             }
         }
 
