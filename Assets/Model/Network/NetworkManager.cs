@@ -184,7 +184,7 @@ namespace Assets.Model.Network
                 case "Building":
                     return SerializableType.Building;
 
-                case "Garden":
+                case "Tree":
                     return SerializableType.Garden;
 
                 case "TV":
