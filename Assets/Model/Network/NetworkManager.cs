@@ -124,7 +124,8 @@ namespace Assets.Model.Network
                     };
                     SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
                     SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
-                    SerializableVector4 rotation = new SerializableVector4(monoBehaviour.transform.rotation.w, monoBehaviour.transform.rotation.x, monoBehaviour.transform.rotation.y, monoBehaviour.transform.rotation.z);
+                    Vector3 uRotation = monoBehaviour.transform.eulerAngles;
+                    SerializableVector3 rotation = new SerializableVector3(uRotation.x, uRotation.y, uRotation.z);
 
                     SerializableTransformObject serializableTransformObject = new SerializableTransformObject(monoBehaviour.GetInstanceID(), type, true, position, scale, rotation);
 
@@ -147,16 +148,17 @@ namespace Assets.Model.Network
                     try
                     {
                         type = StringToSerializableType(monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty));
-                    } catch (ArgumentException e)
+                    }
+                    catch (ArgumentException e)
                     {
                         Console.WriteLine(e.Message);
                         continue;
                     };
-                    
 
                     SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
                     SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
-                    SerializableVector4 rotation = new SerializableVector4(monoBehaviour.transform.rotation.w, monoBehaviour.transform.rotation.x, monoBehaviour.transform.rotation.y, monoBehaviour.transform.rotation.z);
+                    Vector3 uRotation = monoBehaviour.transform.eulerAngles;
+                    SerializableVector3 rotation = new SerializableVector3(uRotation.x, uRotation.y, uRotation.z);
 
                     SerializableTransformObject serializableTransformObject = new SerializableTransformObject(monoBehaviour.GetInstanceID(), type, false, position, scale, rotation);
 
@@ -175,14 +177,19 @@ namespace Assets.Model.Network
             {
                 case "Bench":
                     return SerializableType.Bench;
+
                 case "Car":
                     return SerializableType.Car;
+
                 case "Building":
                     return SerializableType.Building;
+
                 case "Garden":
                     return SerializableType.Garden;
+
                 case "TV":
                     return SerializableType.Television;
+
                 default:
                     throw new ArgumentException("This object is not yet supported: " + typeName);
             }
