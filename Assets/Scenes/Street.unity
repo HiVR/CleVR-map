@@ -6445,8 +6445,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f826e7a1916aca44bb3d3050d746af2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  frameCheck: 30
-  port: 25565
 --- !u!1001 &1680853584
 Prefab:
   m_ObjectHideFlags: 0

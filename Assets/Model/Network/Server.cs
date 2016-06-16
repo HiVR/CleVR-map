@@ -48,6 +48,11 @@ namespace Assets.Model.Network
         /// </summary>
         private bool isConnectionEstablished = false;
 
+        /// <summary>
+        /// Is logging enabled.
+        /// </summary>
+        private bool isLoggingEnabled = false;
+
         #endregion Fields
 
         #region Methods
@@ -76,7 +81,10 @@ namespace Assets.Model.Network
         /// </summary>
         public void StopServer()
         {
-            Debug.Log("[Server] Shutting down...");
+            if (this.isLoggingEnabled)
+            {
+                Debug.Log("[Server] Shutting down...");
+            }
 
             this.isRunning = false;
 
@@ -86,8 +94,11 @@ namespace Assets.Model.Network
             }
             catch (SocketException e)
             {
-                // A socket exception can happen on shutdown, ignore.
-                Debug.Log("[Server] Caught exception on shutdown of server: " + e.Message);
+                if (this.isLoggingEnabled)
+                {
+                    // A socket exception can happen on shutdown, ignore.
+                    Debug.Log("[Server] Caught exception on shutdown of server: " + e.Message);
+                }
             }
 
             this.listener.Close();
@@ -147,7 +158,10 @@ namespace Assets.Model.Network
                     // Begin accepting connections, if a connection has been accepted call "Accept".
                     this.listener.BeginAccept(this.Accept, socketTransform);
 
-                    Debug.Log("[Server] Server started and ready to accept connections.");
+                    if (this.isLoggingEnabled)
+                    {
+                        Debug.Log("[Server] Server started and ready to accept connections.");
+                    }
 
                     // Wait until the packet is sent.
                     this.allDone.WaitOne();
@@ -161,7 +175,10 @@ namespace Assets.Model.Network
         /// <param name="result">contains the Connection to the client</param>
         private void Accept(IAsyncResult result)
         {
-            Debug.Log("[Server] Connection accepted!!");
+            if (this.isLoggingEnabled)
+            {
+                Debug.Log("[Server] Connection accepted!!");
+            }
 
             // Retrieve the SerializableTransformObject from the ASync result.
             SerializableTransformObject serializableTransform = ((SocketTransform)result.AsyncState).SerializableTransformObject;
@@ -188,7 +205,10 @@ namespace Assets.Model.Network
             // Fetch the amount of bytes sent.
             int size = serializableTransform.Socket.EndSend(result);
 
-            Debug.Log("[Server] Send data: " + size + " bytes.");
+            if (this.isLoggingEnabled)
+            {
+                Debug.Log("[Server] Send data: " + size + " bytes.");
+            }
 
             // Connection has been established
             if (!this.isConnectionEstablished)
