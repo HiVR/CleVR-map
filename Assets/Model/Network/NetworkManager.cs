@@ -153,8 +153,8 @@ namespace Assets.Model.Network
         {
             SerializableType type = this.GetTypeOfViewModel(monoBehaviour);
 
-            // Don't send if the Type is unkown.
-            if (type == SerializableType.Unkown)
+            // Don't send if the Type is unknown.
+            if (type == SerializableType.Unknown)
             {
                 return null;
             }
@@ -208,8 +208,8 @@ namespace Assets.Model.Network
         /// <returns>The SerializableTransformObject which was created from the Transform and values.</returns>
         private SerializableTransformObject CreateSerializableTransformObject(int id, Transform transform, bool isStatic, SerializableType type)
         {
-            // Don't send if the Type is unkown or character.
-            if (type == SerializableType.Unkown || type == SerializableType.Character)
+            // Don't send if the Type is unknown or character.
+            if (type == SerializableType.Unknown || type == SerializableType.Character)
             {
                 return null;
             }
@@ -240,14 +240,14 @@ namespace Assets.Model.Network
         }
 
         /// <summary>
-        /// Get the SerializableType of a MonoBehaviour. If the MonoBehaviour SerializableType is Unkown, return SerializableType.Unkown.
+        /// Get the SerializableType of a MonoBehaviour. If the MonoBehaviour SerializableType is Unknown, return SerializableType.Unknown.
         /// </summary>
         /// <param name="monoBehaviour">The monoBehaviour from which to get the SerializableType.</param>
         /// <returns>The SerializableType of the MonoBehaviour</returns>
         private SerializableType GetTypeOfViewModel(MonoBehaviour monoBehaviour)
         {
-            // Return value, Unkown by default.
-            SerializableType type = SerializableType.Unkown;
+            // Return value, Unknown by default.
+            SerializableType type = SerializableType.Unknown;
             try
             {
                 // If the SerializableType is recognized, set the return value.
