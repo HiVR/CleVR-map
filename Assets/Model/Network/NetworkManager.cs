@@ -49,6 +49,7 @@ namespace Assets.Model.Network
             Application.runInBackground = true; // Unity will continue running in the background.
 
             Debug.Log("[Server] Starting Server...");
+
             this.thread = new Thread(new ThreadStart(this.server.StartServer));
 
             // Start the thread.
@@ -66,8 +67,6 @@ namespace Assets.Model.Network
             }
 
             // Sent static objects at start.
-            // -> This will hangs unity until the packets have all been sent!
-            // TODO: Look into this.
             this.SendStaticObjects();
         }
 
@@ -107,30 +106,17 @@ namespace Assets.Model.Network
         /// </summary>
         private void SendStaticObjects()
         {
+            // Send the Ground object.
+            GameObject ground = GameObject.Find("Ground");
+            this.SendSerializableTransformObject(this.CreateSerializableTransformObject(
+                ground.GetInstanceID(),
+                ground.transform,
+                true,
+                SerializableType.Ground));
+
             foreach (MonoBehaviour monoBehaviour in ObjectTracker.GetStaticObjects())
             {
-                // Only send instances of ViewModels.
-                if (monoBehaviour.GetType().Name.EndsWith("ViewModel"))
-                {
-                    SerializableType type;
-                    try
-                    {
-                        type = StringToSerializableType(monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty));
-                    }
-                    catch (ArgumentException e)
-                    {
-                        Console.WriteLine(e.Message);
-                        continue;
-                    };
-                    SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
-                    SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
-                    Vector3 uRotation = monoBehaviour.transform.eulerAngles;
-                    SerializableVector3 rotation = new SerializableVector3(uRotation.x, uRotation.y, uRotation.z);
-
-                    SerializableTransformObject serializableTransformObject = new SerializableTransformObject(monoBehaviour.GetInstanceID(), type, true, position, scale, rotation);
-
-                    this.server.SendData(serializableTransformObject);
-                }
+                this.SendSerializableTransformObject(this.CreateSerializableTransformObject(monoBehaviour, true));
             }
         }
 
@@ -141,36 +127,166 @@ namespace Assets.Model.Network
         {
             foreach (MonoBehaviour monoBehaviour in ObjectTracker.GetDynamicObjects())
             {
-                // Only send instances of ViewModels.
-                if (monoBehaviour.GetType().Name.EndsWith("ViewModel"))
-                {
-                    SerializableType type;
-                    try
-                    {
-                        type = StringToSerializableType(monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty));
-                    }
-                    catch (ArgumentException e)
-                    {
-                        Console.WriteLine(e.Message);
-                        continue;
-                    };
-
-                    SerializableVector3 position = new SerializableVector3(monoBehaviour.transform.position.x, monoBehaviour.transform.position.y, monoBehaviour.transform.position.z);
-                    SerializableVector3 scale = new SerializableVector3(monoBehaviour.transform.lossyScale.x, monoBehaviour.transform.lossyScale.y, monoBehaviour.transform.lossyScale.z);
-                    Vector3 uRotation = monoBehaviour.transform.eulerAngles;
-                    SerializableVector3 rotation = new SerializableVector3(uRotation.x, uRotation.y, uRotation.z);
-
-                    SerializableTransformObject serializableTransformObject = new SerializableTransformObject(monoBehaviour.GetInstanceID(), type, false, position, scale, rotation);
-
-                    this.server.SendData(serializableTransformObject);
-                }
+                this.SendSerializableTransformObject(this.CreateSerializableTransformObject(monoBehaviour, false));
             }
+        }
+
+        /// <summary>
+        /// Send a SerializableTransformObject.
+        /// </summary>
+        /// <param name="serializableTransformObject">The SerializableTransformObject to send.</param>
+        private void SendSerializableTransformObject(SerializableTransformObject serializableTransformObject)
+        {
+            if (serializableTransformObject != null)
+            {
+                this.server.SendData(serializableTransformObject);
+            }
+        }
+
+        /// <summary>
+        /// Create a SerializableTransformObject from the given MonoBehaviour.
+        /// </summary>
+        /// <param name="monoBehaviour">The monoBehaviour from which to create a SerializableTransformObject.</param>
+        /// <param name="isStatic">Is the object static?</param>
+        /// <returns>The SerializableTransformObject which was created from the MonoBehaviour</returns>
+        private SerializableTransformObject CreateSerializableTransformObject(MonoBehaviour monoBehaviour, bool isStatic)
+        {
+            SerializableType type = this.GetTypeOfViewModel(monoBehaviour);
+
+            // Don't send if the Type is unkown.
+            if (type == SerializableType.Unkown)
+            {
+                return null;
+            }
+
+            SerializableCharacter character = null;
+
+            // If it is of type character, parse the Character data.
+            if (type == SerializableType.Character)
+            {
+                // Fetch the character data.
+                Character characterModel = this.FetchCharacterModelFromMonoBehaviour(monoBehaviour);
+
+                // Create the SerializableCharacter object.
+                character = new SerializableCharacter(
+                    true,
+                    characterModel.Name);
+            }
+
+            SerializableVector3 position = new SerializableVector3(
+                monoBehaviour.transform.position.x,
+                monoBehaviour.transform.position.y,
+                monoBehaviour.transform.position.z);
+
+            SerializableVector3 scale = new SerializableVector3(
+                monoBehaviour.transform.lossyScale.x,
+                monoBehaviour.transform.lossyScale.y,
+                monoBehaviour.transform.lossyScale.z);
+
+            SerializableVector3 rotation = new SerializableVector3(
+                monoBehaviour.transform.eulerAngles.x,
+                monoBehaviour.transform.eulerAngles.y,
+                monoBehaviour.transform.eulerAngles.z);
+
+            return new SerializableTransformObject(
+                monoBehaviour.GetInstanceID(),
+                type,
+                isStatic,
+                position,
+                scale,
+                rotation,
+                character);
+        }
+
+        /// <summary>
+        /// Create a SerializableTransformObject from the given Transform and values.
+        /// </summary>
+        /// <param name="id">The monoBehaviour from which to create a SerializableTransformObject.</param>
+        /// <param name="transform">Transform object to use.</param>
+        /// <param name="isStatic">Is the object static?</param>
+        /// <param name="type">Type of the object.</param>
+        /// <returns>The SerializableTransformObject which was created from the Transform and values.</returns>
+        private SerializableTransformObject CreateSerializableTransformObject(int id, Transform transform, bool isStatic, SerializableType type)
+        {
+            // Don't send if the Type is unkown or character.
+            if (type == SerializableType.Unkown || type == SerializableType.Character)
+            {
+                return null;
+            }
+
+            SerializableVector3 position = new SerializableVector3(
+                transform.position.x,
+                transform.position.y,
+                transform.position.z);
+
+            SerializableVector3 scale = new SerializableVector3(
+                transform.lossyScale.x,
+                transform.lossyScale.y,
+                transform.lossyScale.z);
+
+            SerializableVector3 rotation = new SerializableVector3(
+                transform.eulerAngles.x,
+                transform.eulerAngles.y,
+                transform.eulerAngles.z);
+
+            return new SerializableTransformObject(
+                id,
+                type,
+                isStatic,
+                position,
+                scale,
+                rotation,
+                null);
+        }
+
+        /// <summary>
+        /// Get the SerializableType of a MonoBehaviour. If the MonoBehaviour SerializableType is Unkown, return SerializableType.Unkown.
+        /// </summary>
+        /// <param name="monoBehaviour">The monoBehaviour from which to get the SerializableType.</param>
+        /// <returns>The SerializableType of the MonoBehaviour</returns>
+        private SerializableType GetTypeOfViewModel(MonoBehaviour monoBehaviour)
+        {
+            // Return value, Unkown by default.
+            SerializableType type = SerializableType.Unkown;
+            try
+            {
+                // If the SerializableType is recognized, set the return value.
+                type = this.StringToSerializableType(monoBehaviour.GetType().Name.Replace("ViewModel", string.Empty));
+            }
+            catch (ArgumentException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            return type;
+        }
+
+        /// <summary>
+        /// Get the name of a Character. If the monoBehaviour is not of type CharacterViewModel, return null.
+        /// </summary>
+        /// <param name="monoBehaviour">The monoBehaviour from which to get the Character model.</param>
+        /// <returns>The Character model of the monoBehaviour if it is of type CharacterViewModel, otherwise null.</returns>
+        private Character FetchCharacterModelFromMonoBehaviour(MonoBehaviour monoBehaviour)
+        {
+            // Check if the monoBehaviour is of type CharacterViewModel.
+            if (monoBehaviour.GetType() == typeof(CharacterViewModel))
+            {
+                // Cast the monoBehaviour to a CharacterViewModel.
+                CharacterViewModel model = (CharacterViewModel)monoBehaviour;
+
+                // Get the name from the Observed model.
+                return model.Observed;
+            }
+
+            return null;
         }
 
         /// <summary>
         /// Transform String to object of enum SerializableType
         /// </summary>
-        private SerializableType StringToSerializableType(String typeName)
+        /// <param name="typeName">Name of the ModelView</param>
+        /// <returns>The SerializableType which represents the ModelView</returns>
+        private SerializableType StringToSerializableType(string typeName)
         {
             Console.WriteLine(typeName);
             switch (typeName)
@@ -189,6 +305,9 @@ namespace Assets.Model.Network
 
                 case "TV":
                     return SerializableType.Television;
+
+                case "Character":
+                    return SerializableType.Character;
 
                 default:
                     throw new ArgumentException("This object is not yet supported: " + typeName);
