@@ -169,7 +169,7 @@ namespace Assets.Model.Network
 
                 // Create the SerializableCharacter object.
                 character = new SerializableCharacter(
-                    true,
+                    false,
                     characterModel.Name);
             }
 
