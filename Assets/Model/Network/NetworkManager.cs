@@ -112,7 +112,8 @@ namespace Assets.Model.Network
                 ground.GetInstanceID(),
                 ground.transform,
                 true,
-                SerializableType.Ground));
+                SerializableType.Ground,
+                null));
 
             foreach (MonoBehaviour monoBehaviour in ObjectTracker.GetStaticObjects())
             {
@@ -129,6 +130,17 @@ namespace Assets.Model.Network
             {
                 this.SendSerializableTransformObject(this.CreateSerializableTransformObject(monoBehaviour, false));
             }
+
+            // Send the Patient
+            GameObject user = GameObject.Find("User");
+            this.SendSerializableTransformObject(this.CreateSerializableTransformObject(
+                user.GetInstanceID(),
+                user.transform,
+                false,
+                SerializableType.Character,
+                new SerializableCharacter(
+                    true,
+                    "User")));
         }
 
         /// <summary>
@@ -206,14 +218,8 @@ namespace Assets.Model.Network
         /// <param name="isStatic">Is the object static?</param>
         /// <param name="type">Type of the object.</param>
         /// <returns>The SerializableTransformObject which was created from the Transform and values.</returns>
-        private SerializableTransformObject CreateSerializableTransformObject(int id, Transform transform, bool isStatic, SerializableType type)
+        private SerializableTransformObject CreateSerializableTransformObject(int id, Transform transform, bool isStatic, SerializableType type, SerializableCharacter character)
         {
-            // Don't send if the Type is unknown or character.
-            if (type == SerializableType.Unknown || type == SerializableType.Character)
-            {
-                return null;
-            }
-
             SerializableVector3 position = new SerializableVector3(
                 transform.position.x,
                 transform.position.y,
@@ -236,7 +242,7 @@ namespace Assets.Model.Network
                 position,
                 scale,
                 rotation,
-                null);
+                character);
         }
 
         /// <summary>
