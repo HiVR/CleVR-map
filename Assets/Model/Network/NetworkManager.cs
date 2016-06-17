@@ -300,7 +300,7 @@ namespace Assets.Model.Network
                 case "Building":
                     return SerializableType.Building;
 
-                case "Tree":
+                case "TreeGarden":
                     return SerializableType.Garden;
 
                 case "TV":
