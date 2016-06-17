@@ -141,6 +141,15 @@ namespace Assets.Model.Network
         }
 
         /// <summary>
+        /// Are items present in the Queue?
+        /// </summary>
+        /// <returns>True if sendQueue is empty.</returns>
+        public bool IsQueueEmpty()
+        {
+            return this.sendQueue.Count == 0;
+        }
+
+        /// <summary>
         /// This method contains the logic for sending the main queue
         /// </summary>
         private void MainQueueSender()
