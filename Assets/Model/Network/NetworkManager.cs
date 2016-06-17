@@ -20,7 +20,7 @@ namespace Assets.Model.Network
         /// <summary>
         /// The number of fixed updates after which dynamic items are sent.
         /// </summary>
-        private const int NumberOfFramesDynamicObjectsUpdate = 50;
+        private const int NumberOfFramesDynamicObjectsUpdate = 5;
 
         /// <summary>
         /// This server object.
@@ -90,7 +90,7 @@ namespace Assets.Model.Network
         /// </summary>
         private void FixedUpdate()
         {
-            if (this.server.IsConnectionEstablished() && NumberOfFramesDynamicObjectsUpdate < this.numberOfFramesDynamicObjectsUpdateCounter)
+            if (this.server.IsConnectionEstablished() && (NumberOfFramesDynamicObjectsUpdate < this.numberOfFramesDynamicObjectsUpdateCounter) && this.server.IsQueueEmpty())
             {
                 this.numberOfFramesDynamicObjectsUpdateCounter = 0;
 
